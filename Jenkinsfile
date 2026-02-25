@@ -1,39 +1,42 @@
 pipeline {
-    agent any 
-    
+    agent any
     tools {
-        // Specify Maven tool with version 3.8.6
-        maven "maven 3.8.6"
+        maven "maven388"
+        jdk "JDK17"
     }
-
     stages {
-        stage('Code Checkout') {
+       stage('Git Checkout') {
             steps {
-                // Git checkout step
-                git credentialsId: '<Git Credentials>', url: '<GitHub URL>'
+                script {
+                    git branch: 'master',                       
+                        url: 'https://github.com/habsh/spring-rest.git'
+                }
             }
         }
-
-        stage('Building the Code') {
-            steps {
-                // Maven clean and package step
-                sh "mvn clean package"
+        stage('Initialize'){
+            steps{
+                echo "PATH = ${M2_HOME}/bin;${PATH}"
+                echo "M2_HOME = ${M2_HOME}"
             }
         }
-
-        stage('Build the Image') {
+        stage('Build') {
             steps {
-                // Docker build step, naming the image using DockerHub repository name and build number
-                sh "docker build -t <dockerhubname>/<image name>:${BUILD_NUMBER} ."
+                bat 'mvn -B -DskipTests clean package'
             }
         }
-
-        stage('Login and Push the Image') {
+        stage('Test') { 
             steps {
-                // Docker login step
-                sh "docker login -u <Username> -p <password>"
-                // Docker push step, pushing the image with tagged with build number to DockerHub repository
-                sh "docker push <dockerhubname>/<image name>:${BUILD_NUMBER}"
+                bat 'mvn test' 
+            }
+            post {
+                always {
+                    junit 'target/surefire-reports/*.xml' 
+                }
+            }
+        }
+        stage('Deploy') {
+            steps {
+                bat 'java -jar ./target/Rest1-0.0.1-SNAPSHOT.jar'
             }
         }
     }
