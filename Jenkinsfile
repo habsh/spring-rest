@@ -33,11 +33,6 @@ pipeline {
                     junit 'target/surefire-reports/*.xml' 
                 }
             }
-        }
-        stage('Deploy') {
-            steps {
-                //bat 'java -jar ./target/Rest1-0.0.1-SNAPSHOT.jar'
-            }
-        }
+        }        
     }
 }
